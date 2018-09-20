@@ -64,6 +64,7 @@ import { BreakpointStorage } from './breakpoint/breakpoint-marker';
 import { SourceOpener } from './debug-utils';
 import { BreakpointsApplier } from './breakpoint/breakpoint-applier';
 import { DebugToolBar } from './view/debug-toolbar-widget';
+import { DebugConsoleSession } from './debug-console-session';
 
 export const DEBUG_VARIABLES_PROPS = <TreeProps>{
     ...defaultTreeProps,
@@ -90,11 +91,12 @@ function bindDebugWidget(bind: interfaces.Bind): void {
     bind(WidgetFactory).toDynamicValue(context => ({
         id: DEBUG_FACTORY_ID,
         createWidget: (options: DebugWidgetOptions) => {
-            const container = createDebugTargetContainer(context, options.debugSession);
+            const container = createDebugTargetContainer(context, options.sessionId);
             return container.get<DebugWidget>(DebugWidget);
         }
     })).inSingletonScope();
 
+    bind(DebugConsoleSession).toSelf().inSingletonScope();
     bind(DebugFrontendContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toDynamicValue(ctx => ctx.container.get(DebugFrontendContribution));
     bind(DebugSelectionService).toSelf().inSingletonScope();
@@ -117,13 +119,16 @@ function bindDebugSessionManager(bind: interfaces.Bind): void {
     bind(DebugSessionManager).toSelf().inSingletonScope();
 }
 
-function createDebugTargetContainer(context: interfaces.Context, debugSession: DebugSession): Container {
+function createDebugTargetContainer(context: interfaces.Context, sessionId: string): Container {
+    const session = context.container.get(DebugSessionManager).find(sessionId);
+    if (!session) {
+        throw new Error(`Debug session '${sessionId}' does not exist`);
+    }
     const child = createTreeContainer(context.container);
 
-    const debugSelectionService = context.container.get<DebugSelectionService>(DebugSelectionService);
-    const selection = debugSelectionService.get(debugSession.sessionId);
+    const selection = context.container.get(DebugSelectionService).get(session.sessionId);
 
-    child.bind(DebugSession).toConstantValue(debugSession);
+    child.bind(DebugSession).toConstantValue(session);
     child.bind(DebugSelection).toConstantValue(selection);
     child.bind(DebugThreadsWidget).toSelf();
     child.bind(DebugToolBar).toSelf();
