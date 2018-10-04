@@ -49,7 +49,7 @@ export interface QuickOpenHandler {
      * the quick open widget matches this handler's prefix.
      * Allows to initialize the model with some initial data.
      */
-    init?(): void;
+    init?(): Promise<void>;
 
     /**
      * A model that should be used by the quick open widget when this handler's prefix is used.

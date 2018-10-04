@@ -37,7 +37,7 @@ export class QuickCommandService implements QuickOpenModel, QuickOpenHandler {
     protected readonly keybindings: KeybindingRegistry;
 
     /** Initialize this quick open model with the commands. */
-    init(): void {
+    async init(): Promise<void> {
         // let's compute the items here to do it in the context of the currently activeElement
         this.items = [];
         const filteredAndSortedCommands = this.commands.commands.filter(a => a.label).sort((a, b) => a.label!.localeCompare(b.label!));
